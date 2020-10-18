@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Employee.Models;
+using System.Text;
+using Microsoft.VisualStudio.Web.CodeGeneration.Contracts.Messaging;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 
 namespace Employee.Controllers
 {
@@ -65,11 +68,11 @@ namespace Employee.Controllers
         }
 
         // GET: Employees/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> AddOrEdit(int? id)
         {
             if (id == null)
             {
-                return NotFound();
+                return View();
             }
 
             var employees = await _context.Employees.FindAsync(id);
@@ -85,7 +88,7 @@ namespace Employee.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("EmployeeId,FullName,EmpCode,Position,OfficeLocation")] Employees employees)
+        public async Task<IActionResult> AddOrEdit(int id, [Bind("EmployeeId,FullName,EmpCode,Position,OfficeLocation")] Employees employees)
         {
             if (id != employees.EmployeeId)
             {
@@ -94,6 +97,7 @@ namespace Employee.Controllers
 
             if (ModelState.IsValid)
             {
+                
                 try
                 {
                     _context.Update(employees);
@@ -112,11 +116,19 @@ namespace Employee.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            if (!ModelState.IsValid)
+            {
+                _context.Add(employees);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+
+            }
+
             return View(employees);
         }
 
         // GET: Employees/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        /*public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
@@ -131,6 +143,14 @@ namespace Employee.Controllers
             }
 
             return View(employees);
+        }*/
+        public async Task<IActionResult> Delete(int? id)
+        {
+            var employees = await _context.Employees.FindAsync(id);
+            _context.Employees.Remove(employees);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Employees/Delete/5
@@ -141,6 +161,9 @@ namespace Employee.Controllers
             var employees = await _context.Employees.FindAsync(id);
             _context.Employees.Remove(employees);
             await _context.SaveChangesAsync();
+
+            
+
             return RedirectToAction(nameof(Index));
         }
 
